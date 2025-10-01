@@ -1,5 +1,7 @@
 from tabulate import tabulate
 from typing import Self
+import pickle
+import os
 # create method for creating objects of items
     # every item should have name, amount, availability (based on amount), cost(optional), item source
     # should each item hold individual objects or just have an amount attribute
@@ -65,6 +67,18 @@ def viewInventory() -> None:
         table.append([key, item.amount, ("yes" if item.availability  else "no")])
     print(tabulate(table, headers=['Name', 'Amount', 'Available?']))
 
+def saveInventory() -> None:
+    with open('Inventory.pickle', 'wb') as f:
+        pickle.dump(Item.Inventory, f, pickle.HIGHEST_PROTOCOL)
+
+def loadInventory():
+    with open('Inventory.pickle', 'rb') as f:
+        return pickle.load(f)
+
+# load existing on startup
+if os.path.exists('./Inventory.pickle'):
+    Item.Inventory = loadInventory()
+
 # CLI loop
 loop = True
 for n in range(50): print("-",sep=' ', end='', flush=True)
@@ -91,3 +105,10 @@ while loop:
         viewInventory()
     elif selection == "e" or selection == "exit":
         loop = False
+
+save:bool = True if input("save inventory? (y/n)").lower() == "y" else False
+print(save)
+if save:
+    # do save stuff
+    saveInventory()
+    pass
