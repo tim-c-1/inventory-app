@@ -106,8 +106,8 @@ while loop:
     elif selection == "e" or selection == "exit":
         loop = False
 
-save:bool = True if input("save inventory? (y/n)").lower() == "y" else False
-print(save)
+save:bool = True if input("save inventory? (y/n)").lower() != "n" else False
+
 if save:
     # do save stuff
     saveInventory()
