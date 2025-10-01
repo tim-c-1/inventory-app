@@ -26,30 +26,38 @@ def createNewItem() -> Item | None:
         print("item already exists!")
 
 def deleteItem() -> None:
-    dItem: str = input("enter name of item to delete: ")
-    check: str = input(f"are you sure you want to delete {dItem}? This action is permanent and cannot be undone. (y/n): ").lower()
-    if dItem in Item.Inventory:
+    item_to_delete: str = input("enter name of item to delete: ")
+    check: str = input(f"are you sure you want to delete {item_to_delete}? This action is permanent and cannot be undone. (y/n): ").lower()
+    if item_to_delete in Item.Inventory:
         if check == "y":
-            del Item.Inventory[dItem]
+            del Item.Inventory[item_to_delete]
         else:
             print("delete aborted.")
     else:
-        print(f"{dItem} does not exist. Try viewing the inventory to see all items.")
+        print(f"{item_to_delete} does not exist. Try viewing the inventory to see all items.")
 
 def checkOutItem() -> None:
-    cItem: str = input("which item are you checking out?: ")
-    cAmount: float = float(input("amount to check out: "))
-    if cItem in Item.Inventory:
-        item: Item = Item.Inventory[cItem] # use "item" as reference to item in inventory
-        if item.amount >= cAmount and item.amount > 0:
-            item.amount = item.amount - cAmount
-            print(f"successfully checked out {cAmount} of {cItem}.")
+    item_to_checkout: str = input("item to check out: ")
+    checkout_amount: float = float(input("amount to check out: "))
+    if item_to_checkout in Item.Inventory:
+        item: Item = Item.Inventory[item_to_checkout] # use "item" as reference to item in inventory
+        if item.amount >= checkout_amount and item.amount > 0:
+            item.amount -= checkout_amount
+            print(f"successfully checked out {checkout_amount} of {item_to_checkout}.")
             if item.amount == 0:
                 item.availability = False # check for updated availability when checking out item 
         else:
-            print(f"not enough {cItem} to check out. there are only {item.amount} left. checkout failed.")
+            print(f"not enough {item_to_checkout} to check out. there are only {item.amount} left. checkout failed.")
     else:
-        print(f"{cItem} does not exist!")
+        print(f"{item_to_checkout} does not exist!")
+
+def checkInItem() -> None:
+    item_to_checkin: str = input("item to check in: ")
+    checkin_amount: float = float(input("amount to check in: "))
+    if item_to_checkin in Item.Inventory:
+        item: Item = Item.Inventory[item_to_checkin]
+        item.amount += checkin_amount
+
 
 def viewInventory() -> None:
     table: list = list()
@@ -66,7 +74,8 @@ while loop:
     selection: str = input("\nWhat would you like to do?\n"\
                         "(N)ew item\n"\
                         "(D)elete item\n"\
-                        "(C)heck out items\n"\
+                        "Check (O)ut items\n"\
+                        "Check (I)n items\n"
                         "(V)iew inventory\n"\
                         "(E)xit\n"\
                         ).lower() # get user selection, accept any case
@@ -74,8 +83,10 @@ while loop:
         createNewItem() # create new item
     elif selection == "d" or selection == "delete":
         deleteItem() # delete item function
-    elif selection == "c" or selection == "check":
+    elif selection == "o" or selection == "out":
         checkOutItem() # make call to checkout function
+    elif selection == "i" or selection == "in":
+        checkInItem()
     elif selection == "v" or selection == "view":
         viewInventory()
     elif selection == "e" or selection == "exit":
