@@ -2,6 +2,8 @@ from tabulate import tabulate
 from typing import Self
 import pickle
 import os
+import pandas as pd
+import gsheet_update
 # create method for creating objects of items
     # every item should have name, amount, availability (based on amount), cost(optional), item source
     # should each item hold individual objects or just have an amount attribute
@@ -90,12 +92,13 @@ def checkInItem() -> None:
     else:
         print(f"{item_to_checkin} does not exist. Try viewing the inventory to see all items.")
 
-def viewInventory() -> None:
+def unpackInventory() -> pd.DataFrame:
     table: list = list()
     for key, item in Item.Inventory.items():
         table.append([key, item.amount, ("yes" if item.availability  else "no"), item.cost, item.source])
-        
-    print(tabulate(table, headers=['Name', 'Amount', 'Available?', 'Cost', 'Source']))
+    
+    # print(tabulate(table, headers=['Name', 'Amount', 'Available?', 'Cost', 'Source']))
+    return pd.DataFrame(table, columns=["Name", "Amount", "Available?", "Cost", "Source"])
 
 def adjustItemAttribute(attribute: str) -> None:
     selected_item: str = input("enter item name: ")
@@ -148,7 +151,7 @@ while loop:
     elif selection == "i" or selection == "in":
         checkInItem()
     elif selection == "v" or selection == "view":
-        viewInventory()
+        print(tabulate(unpackInventory(), headers='keys',showindex=False, tablefmt='pipe', stralign='center', numalign='right')) # type: ignore
     elif selection == "c" or selection == "cost":
         adjustItemAttribute("cost") # run function to adjust attributes. 
     elif selection == "s" or selection == "source":
@@ -156,9 +159,12 @@ while loop:
     elif selection == "e" or selection == "exit":
         loop = False
 
-save:bool = True if input("save inventory? (y/n)").lower() != "n" else False
+save:bool = True if input("save inventory? ([y]/n)").lower() != "n" else False
 
 if save:
     # do save stuff
     saveInventory()
-    pass
+    push:bool = False if input("push updates to google? (y/[n])").lower() != "y" else True
+    if push:
+        inv = unpackInventory()
+        gsheet_update.updateInvSheet(inv)
