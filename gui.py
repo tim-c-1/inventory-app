@@ -162,9 +162,9 @@ class SaveInventoryMessage(QDialog):
         layout = QVBoxLayout()
         layout.addWidget(message)
         layout.addWidget(self.btnBox)
+        self.setLayout(layout)
 
-if __name__ == "main":
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    app.exec()
+app = QApplication(sys.argv)
+window = MainWindow()
+window.show()
+app.exec()
