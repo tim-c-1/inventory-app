@@ -1,4 +1,4 @@
-from PyQt6.QtCore import QModelIndex, Qt, QAbstractTableModel
+from PyQt6.QtCore import QModelIndex, Qt, QAbstractTableModel, QSize
 from PyQt6.QtWidgets import QApplication, QHeaderView, QMainWindow, QVBoxLayout, QTabWidget, QLineEdit, QComboBox, QGridLayout, QLabel, QButtonGroup, QRadioButton, QWidget, QFileDialog, QPushButton, QCheckBox, QHBoxLayout, QTableView, QDialog, QDialogButtonBox
 from PyQt6.QtGui import QIcon
 import sys, os
@@ -11,7 +11,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("testing")
-
+        self.resize(700, 300)
         # initialize data dictionary objects
         main.Item.Inventory = main.loadInventory() 
 
@@ -42,7 +42,6 @@ class MainWindow(QMainWindow):
 
     def readInventory(self) -> pd.DataFrame:
         inv: dict = main.loadInventory()
-        
         return main.unpackInventory(inv)
 
 class TableModel(QAbstractTableModel):
@@ -66,11 +65,10 @@ class TableModel(QAbstractTableModel):
         if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
             return self._data.columns[col]
 
-    def resetData(self, new_data: pd.DataFrame) -> None:
+    def resetData(self) -> None:
         self.beginResetModel()
-        print(f"data during resetData: {main.Item.Inventory}")
+        new_data = main.unpackInventory(main.Item.Inventory)
         self._data = new_data
-        print(f"data after resetData: {main.Item.Inventory}")
         self.endResetModel()
 
 class UserInputWidget(QWidget):
@@ -82,6 +80,7 @@ class UserInputWidget(QWidget):
         self.delete_item_btn = QPushButton("Delete Item")
         self.edit_item_btn = QPushButton("Edit Item")
         self.save_inv_btn = QPushButton("Save")
+        self.check_out_btn = QPushButton("Check Out Item")
 
         # add user hints
         self.new_item_btn.setToolTip("create new inventory item")
@@ -89,6 +88,7 @@ class UserInputWidget(QWidget):
         # connect buttons
         self.new_item_btn.pressed.connect(self.new_item_btn_pressed)
         self.save_inv_btn.pressed.connect(self.save_inventory)
+        self.check_out_btn.pressed.connect(self.check_out_item)
 
         self.input_layout = QGridLayout()
         
@@ -98,6 +98,7 @@ class UserInputWidget(QWidget):
         self.input_layout.addWidget(self.new_item_btn, 0, 0)
         self.input_layout.addWidget(self.delete_item_btn, 0, 1)
         self.input_layout.addWidget(self.save_inv_btn, 1, 1)
+        self.input_layout.addWidget(self.check_out_btn, 2, 0)
         
         self.setLayout(self.input_layout)
 
@@ -109,6 +110,11 @@ class UserInputWidget(QWidget):
         main.saveInventory()
         dlg = SaveInventoryMessage()
         dlg.exec()
+
+    def check_out_item(self) -> None:
+        dlg = CheckOutDialog()
+        dlg.exec()
+        pass
 
 class NewItemDialog(QDialog):
     def __init__(self) -> None:
@@ -143,8 +149,7 @@ class NewItemDialog(QDialog):
             args = [self.name.text(), float(self.amount.text()), float(self.maxAmount.text()), float(self.cost.text()), self.source.text()]
             if args:
                 main.createNewItem(*args)
-                inv = main.unpackInventory(main.Item.Inventory)
-                MainWindow.model.resetData(inv)
+                MainWindow.model.resetData()
             return super().accept()
         except ValueError:
             print("number fields must be a number")
@@ -163,6 +168,47 @@ class SaveInventoryMessage(QDialog):
         layout.addWidget(message)
         layout.addWidget(self.btnBox)
         self.setLayout(layout)
+
+class CheckOutDialog(QDialog):
+    def __init__(self) -> None:
+        super().__init__()
+        self.setWindowTitle("check out items")
+
+        btn = QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        self.buttonBox = QDialogButtonBox(btn)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+
+        self.item_name = QLineEdit("Name")
+        self.item_amount = QLineEdit("Amount to check out")
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.item_name)
+        layout.addWidget(self.item_amount)
+        layout.addWidget(self.buttonBox)
+        self.setLayout(layout)
+    
+    def accept(self) -> None:
+        try:
+            args: list = [self.item_name.text(), float(self.item_amount.text())]
+            inv = main.Item.Inventory
+            if args:
+                if self.item_name.text() in inv:
+
+                    item: Item = inv[self.item_name.text()]
+
+                    if item.current_amount >= float(self.item_amount.text()) and item.current_amount > 0:
+                        main.checkOutItem(*args)
+                        MainWindow.model.resetData()
+                        return super().accept()
+                    
+                    else:
+                        print(f"not enough {item.name} to check out. there are only {item.current_amount} left. checkout failed.")
+                else:
+                    print(f"{self.item_name.text()} does not exist.")
+
+        except ValueError:
+            print("number fields must be a number")
 
 app = QApplication(sys.argv)
 window = MainWindow()

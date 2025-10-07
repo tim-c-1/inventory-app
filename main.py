@@ -90,18 +90,26 @@ def deleteItem() -> None:
     else:
         print(f"{item_to_delete} does not exist. Try viewing the inventory to see all items.")
 
-def checkOutItem() -> None:
-    item_to_checkout: str = input("item to check out: ")
-    checkout_amount: float = float(input("amount to check out: "))
-    if item_to_checkout in Item.Inventory:
-        item: Item = Item.Inventory[item_to_checkout] # use "item" as reference to item in inventory
-        if item.current_amount >= checkout_amount and item.current_amount > 0:
-            item.checkOut(checkout_amount)
-            print(f"successfully checked out {checkout_amount} of {item_to_checkout}.")
-        else:
-            print(f"not enough {item_to_checkout} to check out. there are only {item.current_amount} left. checkout failed.")
+def checkOutItem(*args) -> None:
+    if args:
+        item_to_checkout: str = args[0]
+        checkout_amount: float = args[1]
+
+        item:Item = Item.Inventory[item_to_checkout]
+        item.checkOut(checkout_amount)
+
     else:
-        print(f"{item_to_checkout} does not exist. Try viewing the inventory to see all items.")
+        item_to_checkout: str = input("item to check out: ")
+        checkout_amount: float = float(input("amount to check out: "))
+        if item_to_checkout in Item.Inventory:
+            item: Item = Item.Inventory[item_to_checkout] # use "item" as reference to item in inventory
+            if item.current_amount >= checkout_amount and item.current_amount > 0:
+                item.checkOut(checkout_amount)
+                print(f"successfully checked out {checkout_amount} of {item_to_checkout}.")
+            else:
+                print(f"not enough {item_to_checkout} to check out. there are only {item.current_amount} left. checkout failed.")
+        else:
+            print(f"{item_to_checkout} does not exist. Try viewing the inventory to see all items.")
 
 def checkInItem() -> None:
     item_to_checkin: str = input("item to check in: ")
