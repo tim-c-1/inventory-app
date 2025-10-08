@@ -260,11 +260,15 @@ class CheckInDialog(QDialog):
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
 
-        self.item_name = QLineEdit("Name")
-        self.item_amount = QLineEdit("Amount to check in")
-        self.max_increase = QCheckBox("Adjust max amount?")
+        self.item_name = QLineEdit()
+        self.item_amount = QLineEdit()
+        self.max_increase = QCheckBox("Increase max amount?")
 
-        self.max_increase.setToolTip("changes total amount to new entered amount plus current items in inventory.")
+        # placeholder text and tooltips
+        self.item_name.setPlaceholderText("Name")
+        self.item_amount.setPlaceholderText("Amount to check in")
+
+        self.max_increase.setToolTip("increases max to current plus new checked in items.")
 
         layout = QVBoxLayout()
 
@@ -284,9 +288,14 @@ class CheckInDialog(QDialog):
                     item: Item = inv[self.item_name.text()]
                     # if new_amount < item.current_amount: 
                         # print("new amount not valid. if you want to decrease current amount, use the checkout button.")
-                    if new_amount > item.total_amount and not self.max_increase.isChecked() == True:
-                        print("new amount not valid. if you want to increase the amount, please check the corresponding box.")
-                    else:
+                    if (new_amount + item.current_amount) > item.total_amount and not self.max_increase.isChecked() == True:
+                        print(f"there are already {item.current_amount} out of {item.total_amount} {item.name}s. new amount not valid. if you want to increase the amount, please check the corresponding box.")
+                    elif (new_amount + item.current_amount) < item.total_amount and self.max_increase.isChecked() == True:
+                        main.checkInItem(args[0], args[1])
+                        print("not enough items to increase max, please edit max amount using edit button.")
+                        MainWindow.model.resetData()
+                        return super().accept()
+                    else:    
                         main.checkInItem(*args)
                         MainWindow.model.resetData()
                         return super().accept()
