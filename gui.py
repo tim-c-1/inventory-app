@@ -215,8 +215,12 @@ class CheckOutDialog(QDialog):
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
 
-        self.item_name = QLineEdit("Name")
-        self.item_amount = QLineEdit("Amount to check out")
+        self.item_name = QLineEdit()
+        self.item_amount = QLineEdit()
+
+        # placeholder text
+        self.item_name.setPlaceholderText("Name")
+        self.item_amount.setPlaceholderText("Amount to check out")
 
         layout = QVBoxLayout()
         layout.addWidget(self.item_name)
