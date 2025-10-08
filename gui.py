@@ -1,5 +1,5 @@
 from PyQt6.QtCore import QModelIndex, Qt, QAbstractTableModel, QSize
-from PyQt6.QtWidgets import QApplication, QHeaderView, QMainWindow, QVBoxLayout, QTabWidget, QLineEdit, QComboBox, QGridLayout, QLabel, QButtonGroup, QRadioButton, QWidget, QFileDialog, QPushButton, QCheckBox, QHBoxLayout, QTableView, QDialog, QDialogButtonBox
+from PyQt6.QtWidgets import QApplication, QHeaderView, QMainWindow, QVBoxLayout, QTabWidget, QLineEdit, QComboBox, QGridLayout, QLabel, QButtonGroup, QRadioButton, QWidget, QFileDialog, QPushButton, QCheckBox, QHBoxLayout, QTableView, QDialog, QDialogButtonBox, QMessageBox
 from PyQt6.QtGui import QIcon
 import sys, os
 import pandas as pd
@@ -19,16 +19,16 @@ class MainWindow(QMainWindow):
         self.layout_1 = QVBoxLayout()
 
         self.table = QTableView()
-        self.user_input_widget = UserInputWidget()
+        self.user_input_widget = UserInputWidget(self)
         
         # set up table model
         data = self.readInventory()        
         MainWindow.model = TableModel(data)
         self.table.setModel(MainWindow.model)
         
-        rowLabels: QHeaderView | None = self.table.verticalHeader()
-        if rowLabels:
-            rowLabels.setVisible(False)
+        # rowLabels: QHeaderView | None = self.table.verticalHeader()
+        # if rowLabels:
+        #     rowLabels.setVisible(False)
 
        
         # build the structure
@@ -43,6 +43,21 @@ class MainWindow(QMainWindow):
     def readInventory(self) -> pd.DataFrame:
         inv: dict = main.loadInventory()
         return main.unpackInventory(inv)
+    
+    def deleteSelectedRow(self) -> None:
+        selected_rows = sorted(list(set(index.row() for index in self.table.selectedIndexes())))
+        if not selected_rows:
+            QMessageBox.information(self, "no selection.", "please select a row to delete.")
+            
+        else:
+            for row in selected_rows:
+                index: QModelIndex = self.model.index(row, 0)
+                item_name : str | None = self.model.data(index, Qt.ItemDataRole.DisplayRole)
+                deleteCheck = QMessageBox.warning(self, "Delete Row", f"Are you sure you want to delete {item_name} permanently? This action cannot be undone.", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel)
+                if item_name and deleteCheck == QMessageBox.StandardButton.Yes:
+                    del main.Item.Inventory[item_name]
+            self.model.resetData()
+
 
 class TableModel(QAbstractTableModel):
     def __init__(self, data: pd.DataFrame) -> None:
@@ -72,8 +87,9 @@ class TableModel(QAbstractTableModel):
         self.endResetModel()
 
 class UserInputWidget(QWidget):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent: MainWindow):
+        super().__init__(parent)
+        self.main_window = parent
 
         # make buttons
         self.new_item_btn = QPushButton("New Item")
@@ -88,6 +104,7 @@ class UserInputWidget(QWidget):
 
         # connect buttons
         self.new_item_btn.pressed.connect(self.new_item_btn_pressed)
+        self.delete_item_btn.pressed.connect(self.delete_row)
         self.save_inv_btn.pressed.connect(self.save_inventory)
         self.check_out_btn.pressed.connect(self.check_out_item)
         self.check_in_btn.pressed.connect(self.check_in_item)
@@ -121,6 +138,10 @@ class UserInputWidget(QWidget):
     def check_in_item(self) -> None:
         dlg = CheckInDialog()
         dlg.exec()
+
+    def delete_row(self) -> None:
+        if self.main_window:
+            self.main_window.deleteSelectedRow()
 
 class NewItemDialog(QDialog):
     def __init__(self) -> None:
