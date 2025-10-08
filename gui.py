@@ -153,12 +153,20 @@ class NewItemDialog(QDialog):
             self.buttonBox.accepted.connect(self.accept)
             self.buttonBox.rejected.connect(self.reject)
 
-            self.name = QLineEdit("Name")
-            self.amount = QLineEdit("Amount")
-            self.maxAmount = QLineEdit("Max Amount")
+            self.name = QLineEdit()
+            self.amount = QLineEdit()
+            self.maxAmount = QLineEdit()
+            self.cost = QLineEdit()
+            self.source = QLineEdit()
+
+            # placeholder text and tooltips
+            self.name.setPlaceholderText("Name")
+            self.amount.setPlaceholderText("Amount")
+            self.maxAmount.setPlaceholderText("Max Amount")
+            self.cost.setPlaceholderText("Cost")
+            self.source.setPlaceholderText("Source")
+
             self.maxAmount.setToolTip("if different than current amount")
-            self.cost = QLineEdit("Cost")
-            self.source = QLineEdit("Item source")
 
             formWidget = QGridLayout()
             formWidget.addWidget(self.name)
@@ -173,7 +181,8 @@ class NewItemDialog(QDialog):
             self.setLayout(layout)
     def accept(self) -> None:
         try:
-            args = [self.name.text(), float(self.amount.text()), float(self.maxAmount.text()), float(self.cost.text()), self.source.text()]
+            maxAmount = float(self.amount.text()) if not isinstance(self.maxAmount.text(), (int, float)) else float(self.maxAmount.text()) # assign field to current amount if not entered.
+            args = [self.name.text(), float(self.amount.text()), maxAmount, float(self.cost.text()), self.source.text()]
             if args:
                 main.createNewItem(*args)
                 MainWindow.model.resetData()
