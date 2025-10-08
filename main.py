@@ -30,10 +30,18 @@ class Item:
         self.source = newSource
     def checkOut(self, amount: float) -> None:
         self.current_amount -= amount
-        if self.current_amount == 0: self.availability = False
-    def checkIn(self, amount: float) -> None:
-        self.current_amount =+ amount
-        if self.current_amount > 0 and self.availability != True: self.availability = True
+        self.checkAvailability()
+    def checkIn(self, amount: float) -> float:
+        self.current_amount += amount
+        self.checkAvailability()
+        return self.current_amount
+    def updateMaxAmount(self, new_max_amount: float) -> None:
+        self.total_amount = new_max_amount
+    def checkAvailability(self) -> None:
+        if self.current_amount == 0: 
+            self.availability = False
+        elif self.current_amount > 0 and self.availability != True: 
+            self.availability = True
 
 def createNewItem(*args) -> Item | None:
     if args:
@@ -111,14 +119,24 @@ def checkOutItem(*args) -> None:
         else:
             print(f"{item_to_checkout} does not exist. Try viewing the inventory to see all items.")
 
-def checkInItem() -> None:
-    item_to_checkin: str = input("item to check in: ")
-    checkin_amount: float = float(input("amount to check in: "))
-    if item_to_checkin in Item.Inventory:
+def checkInItem(*args) -> None:
+    if args:
+        item_to_checkin: str = args[0]
+        checkin_amount: float = args[1]
+        increase_max_amount: bool = args[2]
+
         item: Item = Item.Inventory[item_to_checkin]
-        item.checkIn(checkin_amount)
+        newAmount = item.checkIn(checkin_amount)
+        if increase_max_amount:
+            item.updateMaxAmount(newAmount)
     else:
-        print(f"{item_to_checkin} does not exist. Try viewing the inventory to see all items.")
+        item_to_checkin: str = input("item to check in: ")
+        checkin_amount: float = float(input("amount to check in: "))
+        if item_to_checkin in Item.Inventory:
+            item: Item = Item.Inventory[item_to_checkin]
+            item.checkIn(checkin_amount)
+        else:
+            print(f"{item_to_checkin} does not exist. Try viewing the inventory to see all items.")
 
 def unpackInventory(inv: dict) -> pd.DataFrame:
     table: list = list()

@@ -81,6 +81,7 @@ class UserInputWidget(QWidget):
         self.edit_item_btn = QPushButton("Edit Item")
         self.save_inv_btn = QPushButton("Save")
         self.check_out_btn = QPushButton("Check Out Item")
+        self.check_in_btn = QPushButton("Check In Item")
 
         # add user hints
         self.new_item_btn.setToolTip("create new inventory item")
@@ -89,6 +90,7 @@ class UserInputWidget(QWidget):
         self.new_item_btn.pressed.connect(self.new_item_btn_pressed)
         self.save_inv_btn.pressed.connect(self.save_inventory)
         self.check_out_btn.pressed.connect(self.check_out_item)
+        self.check_in_btn.pressed.connect(self.check_in_item)
 
         self.input_layout = QGridLayout()
         
@@ -99,6 +101,7 @@ class UserInputWidget(QWidget):
         self.input_layout.addWidget(self.delete_item_btn, 0, 1)
         self.input_layout.addWidget(self.save_inv_btn, 1, 1)
         self.input_layout.addWidget(self.check_out_btn, 2, 0)
+        self.input_layout.addWidget(self.check_in_btn, 2, 1)
         
         self.setLayout(self.input_layout)
 
@@ -114,7 +117,10 @@ class UserInputWidget(QWidget):
     def check_out_item(self) -> None:
         dlg = CheckOutDialog()
         dlg.exec()
-        pass
+    
+    def check_in_item(self) -> None:
+        dlg = CheckInDialog()
+        dlg.exec()
 
 class NewItemDialog(QDialog):
     def __init__(self) -> None:
@@ -209,6 +215,49 @@ class CheckOutDialog(QDialog):
 
         except ValueError:
             print("number fields must be a number")
+
+class CheckInDialog(QDialog):
+    def __init__(self) -> None:
+        super().__init__()
+        self.setWindowTitle("check in items")
+
+        btn = QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        self.buttonBox = QDialogButtonBox(btn)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+
+        self.item_name = QLineEdit("Name")
+        self.item_amount = QLineEdit("Amount to check in")
+        self.max_increase = QCheckBox("Adjust max amount?")
+
+        self.max_increase.setToolTip("changes total amount to new entered amount plus current items in inventory.")
+
+        layout = QVBoxLayout()
+
+        layout.addWidget(self.item_name)
+        layout.addWidget(self.item_amount)
+        layout.addWidget(self.max_increase)
+        layout.addWidget(self.buttonBox)
+        self.setLayout(layout)
+
+    def accept(self) -> None:
+        try:
+            args: list = [self.item_name.text(), float(self.item_amount.text()), self.max_increase.isChecked()]
+            inv: dict = main.Item.Inventory
+            new_amount: float = args[1]
+            if args:
+                if self.item_name.text() in inv:
+                    item: Item = inv[self.item_name.text()]
+                    # if new_amount < item.current_amount: 
+                        # print("new amount not valid. if you want to decrease current amount, use the checkout button.")
+                    if new_amount > item.total_amount and not self.max_increase.isChecked() == True:
+                        print("new amount not valid. if you want to increase the amount, please check the corresponding box.")
+                    else:
+                        main.checkInItem(*args)
+                        MainWindow.model.resetData()
+                        return super().accept()
+        except ValueError:
+            print("number fields must be a number")        
 
 app = QApplication(sys.argv)
 window = MainWindow()
