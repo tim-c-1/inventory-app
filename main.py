@@ -46,8 +46,8 @@ class Item:
 def createNewItem(*args) -> Item | None:
     if args:
         name = args[0]
-        total_amount = args[1]
-        amount = args[2]
+        amount = args[1]
+        total_amount = args[2]
         cost = args[3]
         source = args[4]
         return Item(name, total_amount, amount, cost, source)
