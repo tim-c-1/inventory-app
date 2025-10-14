@@ -58,7 +58,6 @@ class MainWindow(QMainWindow):
                     del main.Item.Inventory[item_name]
             self.model.resetData()
 
-
 class TableModel(QAbstractTableModel):
     def __init__(self, data: pd.DataFrame) -> None:
         super().__init__()
@@ -129,8 +128,7 @@ class UserInputWidget(QWidget):
 
     def save_inventory(self) -> None:
         main.saveInventory()
-        dlg = SaveInventoryMessage()
-        dlg.exec()
+        QMessageBox.information(self, "saved", "inventory saved")
 
     def check_out_item(self) -> None:
         dlg = CheckOutDialog()
@@ -202,10 +200,16 @@ class NewItemDialog(QDialog):
                 print("max amount changed to current")
                 maxAmount = float(self.amount.text()) # assign field to current amount if not entered.
             if float(self.amount.text()) > maxAmount:
+                QMessageBox.information(self, "invalid amount", "current amount cannot be greater than max amount")
                 print("current amount cannot be greater than max amount.")
             elif maxAmount <= 0:
+                QMessageBox.information(self, "invalid amount" , "max amount must be greater than zero")
                 print("max amount must be greater than zero.")
+            elif float(self.amount.text()) < 0:
+                QMessageBox.information(self, "invalid amount", "current amount cannot be less than zero.")
+                print("current amount cannot be less than zero.")
             elif float(self.cost.text()) < 0:
+                QMessageBox.information(self, "invalid cost", "item cost cannot be less than zero")
                 print("item cost cannot be less than zero.")
             else:
                 args = [self.name.text(), float(self.amount.text()), maxAmount, float(self.cost.text()), self.source.text()]
@@ -214,22 +218,8 @@ class NewItemDialog(QDialog):
                     MainWindow.model.resetData()
                 return super().accept()
         except ValueError:
+            QMessageBox.information(self, "invalid number", "number fields must be a number")
             print("number fields must be a number")
-        
-class SaveInventoryMessage(QDialog):
-    def __init__(self) -> None:
-        super().__init__()
-
-        btn = QDialogButtonBox.StandardButton.Ok
-        self.btnBox = QDialogButtonBox(btn)
-        self.btnBox.accepted.connect(self.accept)
-
-        message = QLabel("Inventory saved.")
-
-        layout = QVBoxLayout()
-        layout.addWidget(message)
-        layout.addWidget(self.btnBox)
-        self.setLayout(layout)
 
 class CheckOutDialog(QDialog):
     def __init__(self) -> None:
@@ -269,11 +259,14 @@ class CheckOutDialog(QDialog):
                         return super().accept()
                     
                     else:
+                        QMessageBox.information(self, "invalid amount", f"not enough {item.name} to check out. there are only {item.current_amount} left. checkout failed.")
                         print(f"not enough {item.name} to check out. there are only {item.current_amount} left. checkout failed.")
                 else:
+                    QMessageBox.information(self, "invalid item name", f"{self.item_name.text()} does not exist.")
                     print(f"{self.item_name.text()} does not exist.")
 
         except ValueError:
+            QMessageBox.information(self, "invalid number", "number fields must be a number")
             print("number fields must be a number")
 
 class CheckInDialog(QDialog):
@@ -315,17 +308,20 @@ class CheckInDialog(QDialog):
                     # if new_amount < item.current_amount: 
                         # print("new amount not valid. if you want to decrease current amount, use the checkout button.")
                     if (new_amount + item.current_amount) > item.total_amount and not self.max_increase.isChecked() == True:
+                        QMessageBox.information(self,"too many items", f"there are already {item.current_amount} out of {item.total_amount} {item.name}s. If you want to increase the amount, please check the corresponding box.")
                         print(f"there are already {item.current_amount} out of {item.total_amount} {item.name}s. new amount not valid. if you want to increase the amount, please check the corresponding box.")
                     elif (new_amount + item.current_amount) < item.total_amount and self.max_increase.isChecked() == True:
-                        main.checkInItem(args[0], args[1])
+                        
+                        QMessageBox.information(self, "invalid amount", f"{new_amount} not enough to increase max. please edit max using the edit button.")
                         print("not enough items to increase max, please edit max amount using edit button.")
                         MainWindow.model.resetData()
-                        return super().accept()
+                
                     else:    
                         main.checkInItem(*args)
                         MainWindow.model.resetData()
                         return super().accept()
         except ValueError:
+            QMessageBox.information(self, "invalid number", "number fields must be a number")
             print("number fields must be a number")        
 
 class EditItemDialog(QDialog):
@@ -390,12 +386,16 @@ class EditItemDialog(QDialog):
             new_source: str = self.source.text()
 
             if new_amount > new_total:
+                QMessageBox.information(self, "invalid amount", "current amount cannot be greater than max amount")
                 print("max amount cannot be less than current amount.")
             elif new_amount < 0:
+                QMessageBox.information(self, "invalid amount", "current amount cannot be less than zero.")
                 print("current amount cannot be less than zero.")
             elif new_cost < 0:
+                QMessageBox.information(self, "invalid cost", "item cost cannot be less than zero")
                 print("item cost cannot be less than zero.")
             elif new_total <= 0:
+                QMessageBox.information(self, "invalid amount" , "max amount must be greater than zero")
                 print("max amount must be greater than zero.")
             else:
                 editCheck = QMessageBox.information(self, "", f"are you sure you'd like to update {self.item_name}'s attributes?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel)
@@ -417,8 +417,9 @@ class EditItemDialog(QDialog):
                         main.Item.Inventory[self.item_name].total_amount = new_total
                         main.Item.Inventory[self.item_name].source = new_source
                         MainWindow.model.resetData()
-                        return super().accept()
+                        return super().accept()                        
         except ValueError:
+            QMessageBox.information(self, "invalid number", "number fields must be a number")
             print("number fields must be a number")
         
 
