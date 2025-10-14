@@ -231,12 +231,15 @@ class CheckOutDialog(QDialog):
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
 
-        self.item_name = QLineEdit()
+        self.item_name = QComboBox(self)
         self.item_amount = QLineEdit()
 
-        # placeholder text
-        self.item_name.setPlaceholderText("Name")
         self.item_amount.setPlaceholderText("Amount to check out")
+
+        self.item_name.setEditable(True)
+        self.item_name.addItems(main.Item.Inventory.keys())
+        self.item_name.lineEdit().setPlaceholderText("Name") # pyright: ignore[reportOptionalMemberAccess]
+        self.item_name.setCurrentIndex(-1)
 
         layout = QVBoxLayout()
         layout.addWidget(self.item_name)
@@ -246,12 +249,12 @@ class CheckOutDialog(QDialog):
     
     def accept(self) -> None:
         try:
-            args: list = [self.item_name.text(), float(self.item_amount.text())]
+            args: list = [self.item_name.currentText(), float(self.item_amount.text())]
             inv = main.Item.Inventory
             if args:
-                if self.item_name.text() in inv:
+                if self.item_name.currentText() in inv:
 
-                    item: Item = inv[self.item_name.text()]
+                    item: Item = inv[self.item_name.currentText()]
 
                     if item.current_amount >= float(self.item_amount.text()) and item.current_amount > 0:
                         main.checkOutItem(*args)
@@ -262,8 +265,8 @@ class CheckOutDialog(QDialog):
                         QMessageBox.information(self, "invalid amount", f"not enough {item.name} to check out. there are only {item.current_amount} left. checkout failed.")
                         print(f"not enough {item.name} to check out. there are only {item.current_amount} left. checkout failed.")
                 else:
-                    QMessageBox.information(self, "invalid item name", f"{self.item_name.text()} does not exist.")
-                    print(f"{self.item_name.text()} does not exist.")
+                    QMessageBox.information(self, "invalid item name", f"{self.item_name.currentText()} does not exist.")
+                    print(f"{self.item_name.currentText()} does not exist.")
 
         except ValueError:
             QMessageBox.information(self, "invalid number", "number fields must be a number")
@@ -279,13 +282,16 @@ class CheckInDialog(QDialog):
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
 
-        self.item_name = QLineEdit()
+        self.item_name = QComboBox()
         self.item_amount = QLineEdit()
         self.max_increase = QCheckBox("Increase max amount?")
 
         # placeholder text and tooltips
-        self.item_name.setPlaceholderText("Name")
         self.item_amount.setPlaceholderText("Amount to check in")
+        self.item_name.setEditable(True)
+        self.item_name.addItems(main.Item.Inventory.keys())
+        self.item_name.lineEdit().setPlaceholderText("Name") # pyright: ignore[reportOptionalMemberAccess]
+        self.item_name.setCurrentIndex(-1)
 
         self.max_increase.setToolTip("increases max to current plus new checked in items.")
 
@@ -299,12 +305,12 @@ class CheckInDialog(QDialog):
 
     def accept(self) -> None:
         try:
-            args: list = [self.item_name.text(), float(self.item_amount.text()), self.max_increase.isChecked()]
+            args: list = [self.item_name.currentText(), float(self.item_amount.text()), self.max_increase.isChecked()]
             inv: dict = main.Item.Inventory
             new_amount: float = args[1]
             if args:
-                if self.item_name.text() in inv:
-                    item: Item = inv[self.item_name.text()]
+                if self.item_name.currentText() in inv:
+                    item: Item = inv[self.item_name.currentText()]
                     # if new_amount < item.current_amount: 
                         # print("new amount not valid. if you want to decrease current amount, use the checkout button.")
                     if (new_amount + item.current_amount) > item.total_amount and not self.max_increase.isChecked() == True:
@@ -320,6 +326,8 @@ class CheckInDialog(QDialog):
                         main.checkInItem(*args)
                         MainWindow.model.resetData()
                         return super().accept()
+                else:
+                    QMessageBox.information(self, "invalid item name", f"{self.item_name.currentText()} does not exist.")
         except ValueError:
             QMessageBox.information(self, "invalid number", "number fields must be a number")
             print("number fields must be a number")        
