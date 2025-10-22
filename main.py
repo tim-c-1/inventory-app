@@ -214,4 +214,4 @@ if __name__ == "__main__":
         push:bool = False if input("push updates to google? (y/[n])").lower() != "y" else True
         if push:
             inv = unpackInventory(Item.Inventory)
-            gsheet_update.updateInvSheet(inv)
+            gsheet_update.updateInvSheet(inv, "InvTest")

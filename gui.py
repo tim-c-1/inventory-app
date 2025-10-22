@@ -1,6 +1,6 @@
 from PyQt6.QtCore import QModelIndex, Qt, QAbstractTableModel, QSize
-from PyQt6.QtWidgets import QApplication, QHeaderView, QMainWindow, QVBoxLayout, QTabWidget, QLineEdit, QComboBox, QGridLayout, QLabel, QButtonGroup, QRadioButton, QWidget, QFileDialog, QPushButton, QCheckBox, QHBoxLayout, QTableView, QDialog, QDialogButtonBox, QMessageBox
-from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import QApplication, QHeaderView, QMainWindow, QVBoxLayout, QTabWidget, QLineEdit, QComboBox, QGridLayout, QLabel, QButtonGroup, QRadioButton, QWidget, QFileDialog, QPushButton, QCheckBox, QHBoxLayout, QTableView, QDialog, QDialogButtonBox, QMessageBox, QMenu, QMenuBar
+from PyQt6.QtGui import QCloseEvent, QIcon, QAction
 import sys, os
 import pandas as pd
 from main import Item
@@ -12,6 +12,11 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("testing")
         self.resize(700, 300)
+
+        # set up config and help windows
+        self.cw = None 
+        self.hw = None
+
         # initialize data dictionary objects
         main.Item.Inventory = main.loadInventory() 
 
@@ -25,12 +30,11 @@ class MainWindow(QMainWindow):
         data = self.readInventory()        
         MainWindow.model = TableModel(data)
         self.table.setModel(MainWindow.model)
-        
-        # rowLabels: QHeaderView | None = self.table.verticalHeader()
-        # if rowLabels:
-        #     rowLabels.setVisible(False)
 
-       
+        # menu bar and actions must be created after widgets containing used methods
+        self._createActions()
+        self._createMenuBar()
+
         # build the structure
         # self.setCentralWidget(self.user_input_widget)
         self.setCentralWidget(self.central_widget)
@@ -39,6 +43,44 @@ class MainWindow(QMainWindow):
         self.layout_1.addWidget(self.table)
         self.layout_1.addWidget(self.user_input_widget)
         
+    def _createMenuBar(self):
+        menuBar: QMenuBar | None = self.menuBar()
+        fileMenu = QMenu("&File", self)
+        configMenu = QMenu("&Config", self)
+        helpMenu = QMenu("&Help", self)
+        if menuBar: 
+            menuBar.addMenu(fileMenu)
+            menuBar.addMenu(configMenu)
+            menuBar.addMenu(helpMenu)
+            
+        fileMenu.addAction(self.saveAction)
+        fileMenu.addAction(self.saveExitAction)
+
+        configMenu.addAction(self.configAction)
+        helpMenu.addAction(self.helpAction)
+
+
+    def _createActions(self):
+        self.saveAction = QAction("&Save", self)
+        self.saveExitAction = QAction("Save and &exit", self)
+        self.configAction = QAction("&Config google sheets", self)
+        self.helpAction = QAction("&Help", self)
+
+        self.saveAction.triggered.connect(self.user_input_widget.save_inventory)
+        self.saveExitAction.triggered.connect(self.saveAndExit)
+        self.configAction.triggered.connect(self.configWindow)
+        self.helpAction.triggered.connect(self.helpWindow)
+
+        
+    def configWindow(self) -> None:
+        if self.cw is None:
+            self.cw = configMenu()
+        self.cw.show()
+
+    def helpWindow(self) -> None:
+        if self.hw is None:
+            self.hw = helpMenu()
+        self.hw.show()
 
     def readInventory(self) -> pd.DataFrame:
         inv: dict = main.loadInventory()
@@ -58,6 +100,16 @@ class MainWindow(QMainWindow):
                     del main.Item.Inventory[item_name]
             self.model.resetData()
 
+    def saveAndExit(self) -> None:
+        self.user_input_widget.save_inventory()
+        sys.exit()
+
+    def closeEvent(self, a0: QCloseEvent | None) -> None:
+        saveCheck = QMessageBox.information(self, "save?", "do you want to save before closing?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        if saveCheck == QMessageBox.StandardButton.Yes:
+            self.user_input_widget.save_inventory()
+        return super().closeEvent(a0)
+    
 class TableModel(QAbstractTableModel):
     def __init__(self, data: pd.DataFrame) -> None:
         super().__init__()
@@ -430,6 +482,44 @@ class EditItemDialog(QDialog):
             QMessageBox.information(self, "invalid number", "number fields must be a number")
             print("number fields must be a number")
         
+class configMenu(QWidget):
+    def __init__(self) -> None:
+        super().__init__()
+
+        self.setWindowTitle("Config")
+        self.resize(700, 300)
+
+        self.options = QLabel("testing")
+
+        # need to add method for creating authentication folder, credential file, collecting sheet information
+        # # method should check if auth folder exists -> if not: create -> check if credentials file exists -> if not: display help page on creating? -> 
+        # # then take desired sheet name and authenticate. 
+        # could also collect info about when to archive a sheet
+        # # gsheet would check date, copy current information to a new sheet titled archive_[mm/yyyy], then update main sheet
+
+        layout = QGridLayout()
+        layout.addWidget(self.options)
+
+        self.setLayout(layout)
+
+class helpMenu(QWidget):
+    def __init__(self) -> None:
+        super().__init__()
+
+        self.setWindowTitle("Help")
+        self.resize(300, 300)
+
+        self.body = QLabel("this is some help text.\nnow the help text is on a new line.")
+
+        self.contents = QLabel("1. Introduction\n2. Adding an item\n3. Deleting an item\n4. Checking items in/out")
+
+        # this should probably just load a text/md file and display it? 
+        # and the file can live with the whole package and be opened outside of the application
+
+        layout = QGridLayout()
+        layout.addWidget(self.body)
+
+        self.setLayout(layout)
 
 
 app = QApplication(sys.argv)

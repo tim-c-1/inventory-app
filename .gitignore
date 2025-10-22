@@ -218,3 +218,6 @@ __marimo__/
 # save files
 *.pickle
 *.pkl
+
+# auth files
+authentication/
