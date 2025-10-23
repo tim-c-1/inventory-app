@@ -4,8 +4,9 @@ from PyQt6.QtGui import QCloseEvent, QIcon, QAction
 import sys, os
 import pandas as pd
 from main import Item
-import main
+import main, gsheet_update
 from typing import Any
+import pickle
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -43,35 +44,36 @@ class MainWindow(QMainWindow):
         self.layout_1.addWidget(self.table)
         self.layout_1.addWidget(self.user_input_widget)
         
-    def _createMenuBar(self):
+    def _createMenuBar(self) -> None:
         menuBar: QMenuBar | None = self.menuBar()
         fileMenu = QMenu("&File", self)
-        configMenu = QMenu("&Config", self)
+        g_sheet_menu = QMenu("&Google Sheet use", self)
         helpMenu = QMenu("&Help", self)
         if menuBar: 
             menuBar.addMenu(fileMenu)
-            menuBar.addMenu(configMenu)
+            menuBar.addMenu(g_sheet_menu)
             menuBar.addMenu(helpMenu)
             
         fileMenu.addAction(self.saveAction)
         fileMenu.addAction(self.saveExitAction)
 
-        configMenu.addAction(self.configAction)
+        g_sheet_menu.addAction(self.configAction)
+        g_sheet_menu.addAction(self.push_to_google_action)
         helpMenu.addAction(self.helpAction)
 
-
-    def _createActions(self):
+    def _createActions(self) -> None:
         self.saveAction = QAction("&Save", self)
         self.saveExitAction = QAction("Save and &exit", self)
         self.configAction = QAction("&Config google sheets", self)
         self.helpAction = QAction("&Help", self)
+        self.push_to_google_action = QAction("&Push to google sheets", self)
 
         self.saveAction.triggered.connect(self.user_input_widget.save_inventory)
         self.saveExitAction.triggered.connect(self.saveAndExit)
         self.configAction.triggered.connect(self.configWindow)
         self.helpAction.triggered.connect(self.helpWindow)
+        self.push_to_google_action.triggered.connect(self.user_input_widget.push_to_google)
 
-        
     def configWindow(self) -> None:
         if self.cw is None:
             self.cw = configMenu()
@@ -149,6 +151,7 @@ class UserInputWidget(QWidget):
         self.save_inv_btn = QPushButton("Save")
         self.check_out_btn = QPushButton("Check Out Item")
         self.check_in_btn = QPushButton("Check In Item")
+        self.push_to_google_btn = QPushButton("Push to Google Sheets")
 
         # add user hints
         self.new_item_btn.setToolTip("create new inventory item")
@@ -160,7 +163,7 @@ class UserInputWidget(QWidget):
         self.check_out_btn.pressed.connect(self.check_out_item)
         self.check_in_btn.pressed.connect(self.check_in_item)
         self.edit_item_btn.pressed.connect(self.edit_item)
-
+        self.push_to_google_btn.pressed.connect(self.push_to_google)
         self.input_layout = QGridLayout()
         
         # input_layout.setContentsMargins(5,0,0,0)
@@ -171,6 +174,7 @@ class UserInputWidget(QWidget):
         self.input_layout.addWidget(self.save_inv_btn, 1, 1)
         self.input_layout.addWidget(self.check_out_btn, 2, 0)
         self.input_layout.addWidget(self.check_in_btn, 2, 1)
+        self.input_layout.addWidget(self.push_to_google_btn, 3, 0)
         
         self.setLayout(self.input_layout)
 
@@ -207,6 +211,20 @@ class UserInputWidget(QWidget):
                     dlg = EditItemDialog(item_name)
                     dlg.exec()
 
+    def push_to_google(self) -> None:
+        
+        spreadsheet = configMenu().loadConfig()
+        if spreadsheet is None or spreadsheet == "":
+            QMessageBox.information(self, "no config saved", "save config settings to use this feature.")
+        else:
+            try:
+                inv = main.unpackInventory(main.Item.Inventory)
+                self.main_window.user_input_widget.save_inventory()
+                gsheet_update.updateInvSheet(inv, spreadsheet)
+                QMessageBox.information(self, "push successful", "inventory was pushed to google sheets.")
+            except:
+                configMenu().authenticationSetup()
+        
 class NewItemDialog(QDialog):
     def __init__(self) -> None:
             super().__init__()
@@ -487,10 +505,27 @@ class configMenu(QWidget):
         super().__init__()
 
         self.setWindowTitle("Config")
-        self.resize(700, 300)
+        self.resize(100, 50)
 
-        self.options = QLabel("testing")
+        sheet_name_label = QLabel("google sheet name")
+        self.sheet_name = QLineEdit()
+        self.sheet_name.setPlaceholderText("google sheet name")
+        self.sheet_name.setToolTip("this must be the exact name of your google sheet\nI recommend copy/pasting")
+        self.save_config_btn = QPushButton("Save config settings")
+        self.test_config_btn = QPushButton("Test config")
 
+        self.save_config_btn.pressed.connect(self.saveConfig)
+        self.test_config_btn.pressed.connect(self.authenticationSetup)
+
+        # load config
+        if os.path.exists('./g_config.pkl'):
+            # can expand this to an array that unpacks to multiple vars if needed
+            try:
+                self.sheet_name.setText(self.loadConfig())
+            except:
+                os.remove('./g_config.pkl')
+                QMessageBox.information(self, "config load error", "config load error. removed bad config file.\nplease save a new one.")
+        
         # need to add method for creating authentication folder, credential file, collecting sheet information
         # # method should check if auth folder exists -> if not: create -> check if credentials file exists -> if not: display help page on creating? -> 
         # # then take desired sheet name and authenticate. 
@@ -498,9 +533,37 @@ class configMenu(QWidget):
         # # gsheet would check date, copy current information to a new sheet titled archive_[mm/yyyy], then update main sheet
 
         layout = QGridLayout()
-        layout.addWidget(self.options)
+        layout.addWidget(sheet_name_label, 1, 0)
+        layout.addWidget(self.sheet_name, 1, 1)
+        layout.addWidget(self.save_config_btn, 2, 0)
+        layout.addWidget(self.test_config_btn, 2, 1)
 
         self.setLayout(layout)
+
+    def authenticationSetup(self) -> None:
+        if not os.path.exists('./authentication/'):
+            os.mkdir('authentication')
+        if not os.path.exists('./authentication/credentials.json'):
+            # display setup how-to
+            QMessageBox.information(self, "no credentials found", "contact the developer for credentials.\nwhen given, place the json file in authentication folder.")
+        else:
+            try:
+                gc = gsheet_update.authUser()
+                if gc is not None: 
+                    QMessageBox.information(self, "Auth success", "Auth succeeded.")
+                else:
+                    raise Exception
+            except Exception as e:
+                QMessageBox.information(self, "Auth failed", f"Auth failed. Exception: {e}")            
+
+    def saveConfig(self) -> None:
+        with open('g_config.pkl', 'wb') as f:
+            pickle.dump(self.sheet_name.text(), f, pickle.HIGHEST_PROTOCOL)
+        QMessageBox.information(self, "saved.", "saved config settings.")
+
+    def loadConfig(self) -> Any:
+        with open('g_config.pkl', 'rb') as f:
+            return pickle.load(f)
 
 class helpMenu(QWidget):
     def __init__(self) -> None:
