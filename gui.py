@@ -8,10 +8,19 @@ import main, gsheet_update
 from typing import Any
 import pickle
 
+basedir = os.path.dirname(__file__)
+
+try:
+    from ctypes import windll # only exists on windows
+    myappid = 'com.github.tim-c-1.inventorysystem.version1'
+    windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+except ImportError:
+    pass
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("testing")
+        self.setWindowTitle("Inventory")
         self.resize(700, 300)
 
         # set up config and help windows

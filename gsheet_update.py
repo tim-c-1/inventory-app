@@ -32,36 +32,15 @@ def authUser() -> gspread.Client | None: # may not need this? it checks the expi
     
 
 def updateInvSheet(inv: DataFrame, spreadsheet: str) -> None:
-    credentials = 'authentication/credentials.json'
-    auth = 'authentication/authorized_user.json'
 
     gc = authUser()
-    # gc = gspread.oauth(credentials_filename=credentials, authorized_user_filename=auth)
+
     if gc is not None:
         sh = gc.open(spreadsheet)
         worksheet = sh.get_worksheet(0)
         worksheet.update([inv.columns.values.tolist()] + inv.values.tolist())
     else:
         print("gc returned as failed. check exception.")
-    # try:
-    #     gc = gspread.oauth(credentials_filename=credentials, authorized_user_filename=auth)
-
-    #     sh = gc.open(spreadsheet)
-
-    #     worksheet = sh.get_worksheet(0)
-
-    #     worksheet.update([inv.columns.values.tolist()] + inv.values.tolist())
-    # except:
-    #     os.remove(auth)
-        
-    #     gc = gspread.oauth(credentials_filename=credentials, authorized_user_filename=auth)
-
-    #     sh = gc.open(spreadsheet)
-
-    #     worksheet = sh.get_worksheet(0)
-
-    #     worksheet.update([inv.columns.values.tolist()] + inv.values.tolist())
-
 
 def setupAuth(credentials, auth) -> gspread.Client:
     # for first time setup?

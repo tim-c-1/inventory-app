@@ -4,13 +4,26 @@ import pickle
 import os
 import pandas as pd
 import gsheet_update
-# create method for creating objects of items
-    # every item should have name, amount, availability (based on amount), cost(optional), item source
-    # should each item hold individual objects or just have an amount attribute
 
-# display function should tabulate the inventory items
-# you should be able to check out a custom amount of items, not to exceed the amount available
-# you should be able to edit the item's attributes
+"""
+    This inventory program offers a simple desktop interferace to keep track of inventory and push changes to a google sheet for collaboration.
+    main.py includes a rudimentary interface for using the inventory system from the command line.
+
+    Copyright (C) 2025 Timothy Cooney
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
 
 class Item: 
     Inventory: dict[str, Self] = dict()
