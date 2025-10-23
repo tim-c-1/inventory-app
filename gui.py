@@ -21,6 +21,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Inventory")
+        self.setWindowIcon(QIcon(os.path.join(basedir,'./icons/database.png')))
         self.resize(700, 300)
 
         # set up config and help windows
@@ -76,6 +77,9 @@ class MainWindow(QMainWindow):
         self.configAction = QAction("&Config google sheets", self)
         self.helpAction = QAction("&Help", self)
         self.push_to_google_action = QAction("&Push to google sheets", self)
+
+        # add icons
+        self.push_to_google_action.setIcon(QIcon('./icons/table-share.png'))
 
         self.saveAction.triggered.connect(self.user_input_widget.save_inventory)
         self.saveExitAction.triggered.connect(self.saveAndExit)
@@ -174,6 +178,14 @@ class UserInputWidget(QWidget):
         self.edit_item_btn.pressed.connect(self.edit_item)
         self.push_to_google_btn.pressed.connect(self.push_to_google)
         self.input_layout = QGridLayout()
+        
+        # set icons
+        self.new_item_btn.setIcon(QIcon('./icons/table-insert-row.png'))
+        self.delete_item_btn.setIcon(QIcon('./icons/table-delete.png'))
+        self.save_inv_btn.setIcon(QIcon('./icons/table.png'))
+        self.check_out_btn.setIcon(QIcon('./icons/table--minus.png'))
+        self.check_in_btn.setIcon(QIcon('./icons/table--plus.png'))
+        self.push_to_google_btn.setIcon(QIcon('./icons/table-share.png'))
         
         # input_layout.setContentsMargins(5,0,0,0)
         
