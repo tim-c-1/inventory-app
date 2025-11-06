@@ -153,11 +153,12 @@ def checkInItem(*args) -> None:
 
 def unpackInventory(inv: dict) -> pd.DataFrame:
     table: list = list()
-    for key, item in inv.items():
-        table.append([key, item.current_amount, item.total_amount, ("yes" if item.availability  else "no"), item.cost, item.source])
     
+    for key, item in inv.items():
+        attributes = item.__dict__.copy()
+        table.append(attributes)
     # print(tabulate(table, headers=['Name', 'Amount', 'Available?', 'Cost', 'Source']))
-    return pd.DataFrame(table, columns=["Name", "Current Amount", "Total Amount","Available?", "Cost", "Source"])
+    return pd.DataFrame(table)
 
 def adjustItemAttribute(attribute: str) -> None:
     selected_item: str = input("enter item name: ")

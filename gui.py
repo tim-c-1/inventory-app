@@ -172,6 +172,7 @@ class UserInputWidget(QWidget):
         self.check_out_btn = QPushButton("Check Out Item")
         self.check_in_btn = QPushButton("Check In Item")
         self.push_to_google_btn = QPushButton("Push to Google Sheets")
+        self.add_attribute_btn = QPushButton("Add item attribute")
 
         # add user hints
         self.new_item_btn.setToolTip("create new inventory item")
@@ -184,6 +185,7 @@ class UserInputWidget(QWidget):
         self.check_in_btn.pressed.connect(self.check_in_item)
         self.edit_item_btn.pressed.connect(self.edit_item)
         self.push_to_google_btn.pressed.connect(self.push_to_google)
+        self.add_attribute_btn.pressed.connect(self.add_attribute)
         self.input_layout = QGridLayout()
         
         # set icons
@@ -203,6 +205,7 @@ class UserInputWidget(QWidget):
         self.input_layout.addWidget(self.check_out_btn, 2, 0)
         self.input_layout.addWidget(self.check_in_btn, 2, 1)
         self.input_layout.addWidget(self.push_to_google_btn, 3, 0)
+        self.input_layout.addWidget(self.add_attribute_btn, 3, 1)
         
         self.setLayout(self.input_layout)
 
@@ -252,6 +255,10 @@ class UserInputWidget(QWidget):
                 QMessageBox.information(self, "push successful", "inventory was pushed to google sheets.")
             except:
                 configMenu().authenticationSetup()
+
+    def add_attribute(self) -> None:
+        dlg = addAttribute()
+        dlg.exec()
         
 class NewItemDialog(QDialog):
     def __init__(self) -> None:
@@ -611,6 +618,67 @@ class helpMenu(QWidget):
         layout.addWidget(self.body)
 
         self.setLayout(layout)
+
+class addAttribute(QDialog):
+    def __init__(self) -> None:
+        super().__init__()
+        self.setWindowTitle("Add attribute")
+        self.label = QLabel("adding new item attribute")
+
+        # take text field -> feed into attribute for all objects
+        self.attribute_name = QLineEdit()
+        attribute_name_label = QLabel("Attribute name: ")
+        self.attribute_name.setPlaceholderText("attribute name")
+
+        self.attribute_type = QComboBox()
+        attribute_type_label = QLabel("Attribute type: ")
+        self.attribute_type.setPlaceholderText("attribute type")
+        self.attribute_type.setToolTip("what is the attribute type? Text, Number, True/False, etc...")
+        self.attribute_type.addItems(["Text", "Number", "True/False"])
+        self.attribute_type.setEditable(True)
+
+        btn = QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        self.buttonbox = QDialogButtonBox(btn)
+        self.buttonbox.accepted.connect(self.accept)
+        self.buttonbox.rejected.connect(self.reject)
+
+        layout = QGridLayout()
+        layout.addWidget(self.label, 0, 0, 1, 2)
+        layout.addWidget(attribute_name_label, 1, 0)
+        layout.addWidget(self.attribute_name, 1, 1)
+        layout.addWidget(attribute_type_label, 2, 0)
+        layout.addWidget(self.attribute_type, 2, 1)
+        layout.addWidget(self.buttonbox, 3, 0, 1, 2)
+
+        self.setLayout(layout)
+
+        # loop through objects in Item.Inventory and add the attribute? how will each item have different attributes? popup with prompt for each item?
+            # load a blank column and the user can add them in one by one? <- probably this...
+
+    def accept(self) -> None:
+        # try:
+            # collect vars
+            new_attribute = self.attribute_name.text()
+            if self.attribute_type.currentText() == "Text":
+                new_atribute_type = str()
+            elif self.attribute_type.currentText() == "Number":
+                new_atribute_type = float()
+            elif self.attribute_type.currentText() == "True/False":
+                new_atribute_type = bool()
+            else:
+                new_atribute_type = None
+
+            for key, item in Item.Inventory.items():
+                setattr(item, new_attribute, new_atribute_type)
+            
+            MainWindow.model.resetData()
+            
+            return super().accept()
+        # except:
+        #     print("somethings wrong")
+
+        
+        # table needs to be updated upon saving of new item attribute
 
 
 app = QApplication(sys.argv)
