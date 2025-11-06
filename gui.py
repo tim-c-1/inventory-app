@@ -41,7 +41,7 @@ class MainWindow(QMainWindow):
         data = self.readInventory()        
         MainWindow.model = TableModel(data)
         self.table.setModel(MainWindow.model)
-
+        self.table.setMinimumHeight(self.getTableHeight())
         # menu bar and actions must be created after widgets containing used methods
         self._createActions()
         self._createMenuBar()
@@ -53,6 +53,8 @@ class MainWindow(QMainWindow):
 
         self.layout_1.addWidget(self.table)
         self.layout_1.addWidget(self.user_input_widget)
+
+        # self.resize(700, self.getTableHeight())
         
     def _createMenuBar(self) -> None:
         menuBar: QMenuBar | None = self.menuBar()
@@ -124,6 +126,11 @@ class MainWindow(QMainWindow):
         if saveCheck == QMessageBox.StandardButton.Yes:
             self.user_input_widget.save_inventory()
         return super().closeEvent(a0)
+    
+    def getTableHeight(self) -> int:
+        nRows = MainWindow.model._data.shape[0]
+        rowHeight = self.table.rowHeight(0)
+        return rowHeight * nRows
     
 class TableModel(QAbstractTableModel):
     def __init__(self, data: pd.DataFrame) -> None:
