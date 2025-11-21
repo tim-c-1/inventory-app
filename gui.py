@@ -1,5 +1,5 @@
 from PyQt6.QtCore import QModelIndex, Qt, QAbstractTableModel, QSize
-from PyQt6.QtWidgets import QApplication, QHeaderView, QMainWindow, QVBoxLayout, QTabWidget, QLineEdit, QComboBox, QGridLayout, QLabel, QButtonGroup, QRadioButton, QWidget, QFileDialog, QPushButton, QCheckBox, QHBoxLayout, QTableView, QDialog, QDialogButtonBox, QMessageBox, QMenu, QMenuBar
+from PyQt6.QtWidgets import QApplication, QHeaderView, QMainWindow, QVBoxLayout, QTabWidget, QLineEdit, QComboBox, QGridLayout, QLabel, QButtonGroup, QRadioButton, QWidget, QFileDialog, QPushButton, QCheckBox, QHBoxLayout, QTableView, QDialog, QDialogButtonBox, QMessageBox, QMenu, QMenuBar, QTextBrowser
 from PyQt6.QtGui import QCloseEvent, QIcon, QAction
 import sys, os
 import pandas as pd
@@ -7,6 +7,7 @@ from main import Item
 import main, gsheet_update
 from typing import Any
 import pickle
+import markdown
 
 basedir = os.path.dirname(__file__)
 
@@ -610,22 +611,28 @@ class configMenu(QWidget):
             return pickle.load(f)
 
 class helpMenu(QWidget):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, parent=None) -> None:
+        super().__init__(parent)
 
         self.setWindowTitle("Help")
-        self.resize(300, 300)
+        self.resize(500, 800)
 
-        self.body = QLabel("this is some help text.\nnow the help text is on a new line.")
-
-        self.contents = QLabel("1. Introduction\n2. Adding an item\n3. Deleting an item\n4. Checking items in/out")
-
-        # this should probably just load a text/md file and display it? 
-        # and the file can live with the whole package and be opened outside of the application
+        md_file = './help/help.md'
 
         layout = QGridLayout()
-        layout.addWidget(self.body)
+        self.text_browser = QTextBrowser()
 
+        img_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),'help/' )
+        self.text_browser.setSearchPaths([img_dir])
+       
+        if md_file and os.path.exists(md_file):
+            with open(md_file, 'r', encoding='utf-8') as f:
+                md_content = f.read()
+            
+            self.text_browser.setMarkdown(md_content)
+        else:
+            self.text_browser.setPlainText("Error: Help file not found.")
+        layout.addWidget(self.text_browser)
         self.setLayout(layout)
 
 class addAttribute(QDialog):

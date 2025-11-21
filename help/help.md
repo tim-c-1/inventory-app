@@ -1,4 +1,4 @@
-# Help file
+# Help
 
 ## Contents
 
@@ -41,7 +41,8 @@ To delete an item, select that item in the table display, then press the delete 
 
 You will be asked to confirm the deletion before proceeding.
 
-![delete item dialog](./help-images/deleteitem.png)
+<!-- ![delete item dialog](./help-images/deleteitem.png) -->
+<img src='./help-images//deleteitem.png' alt='delete item dialog' height='300' width='500'/>
 
 > **THIS IS PERMANENT AND CANNOT BE REVERSED.**
 > 
@@ -51,7 +52,8 @@ You will be asked to confirm the deletion before proceeding.
 
 To check items in or out, select the item in the table display, then press the appropriate button.
 
-![checking out](./help-images/checkout.png)
+<!-- ![checking out](./help-images/checkout.png) -->
+<img src='./help-images/checkout.png' alt='checking out' height='200' width='300'/>
 
 > You cannot check out more items than are currently in stock and the system will block you from doing this.
 >
@@ -59,7 +61,8 @@ To check items in or out, select the item in the table display, then press the a
 
 The following will result in a current and total amount of 15.
 
-![checking in](./help-images/checkin.png)
+<!-- ![checking in](./help-images/checkin.png) -->
+<img src='./help-images/checkin.png' alt='checking in' height='200' width='350'/>
 
 ## 5. Google Sheets
 
@@ -74,8 +77,10 @@ In the config menu, you enter your destination spreadsheet. The table will be up
 Press test config. This will check for a credentials token present in your filesystem, then Google will ask you for authentication to refresh your access token. If everything is set up properly, a dialog will confirm it is working.
 >It is recommended to save your working config settings. 
 
-![google sheet config menu](./help-images/gsheetconfig.png)
+<!-- ![google sheet config menu](./help-images/gsheetconfig.png) -->
+<img src='./help-images/gsheetconfig.png' alt='google sheet config menu' height='128' width='332'/>
 
 You can then use the button to push your inventory to Google Sheets.
 
-![google sheet push button](./help-images/gsheetpush.png)
+<!-- ![google sheet push button](./help-images/gsheetpush.png) -->
+<img src='./help-images/gsheetpush.png' alt='google sheet push button' height='100' width ='200'/>
