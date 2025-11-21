@@ -29,7 +29,8 @@ class MainWindow(QMainWindow):
         self.hw = None
 
         # initialize data dictionary objects
-        main.Item.Inventory = main.loadInventory() 
+        if os.path.exists('./Inventory.pkl'):
+            main.Item.Inventory = main.loadInventory() 
 
         self.central_widget = QWidget()
         self.layout_1 = QVBoxLayout()
@@ -38,8 +39,12 @@ class MainWindow(QMainWindow):
         self.user_input_widget = UserInputWidget(self)
         
         # set up table model
-        data = self.readInventory()        
-        MainWindow.model = TableModel(data)
+        data = self.readInventory()
+        if data is not None:
+            MainWindow.model = TableModel(data)
+        else:
+            data = pd.DataFrame() 
+            MainWindow.model = TableModel(data)
         self.table.setModel(MainWindow.model)
         self.table.setMinimumHeight(self.getTableHeight())
         # menu bar and actions must be created after widgets containing used methods
@@ -99,10 +104,13 @@ class MainWindow(QMainWindow):
             self.hw = helpMenu()
         self.hw.show()
 
-    def readInventory(self) -> pd.DataFrame:
-        inv: dict = main.loadInventory()
-        return main.unpackInventory(inv)
-    
+    def readInventory(self) -> pd.DataFrame | None:
+        if os.path.exists('./Inventory.pkl'):
+            inv: dict = main.loadInventory()
+            return main.unpackInventory(inv)
+        else:
+            return None
+        
     def deleteSelectedRow(self) -> None:
         selected_rows = sorted(list(set(index.row() for index in self.table.selectedIndexes())))
         if not selected_rows:
@@ -122,6 +130,7 @@ class MainWindow(QMainWindow):
         sys.exit()
 
     def closeEvent(self, a0: QCloseEvent | None) -> None:
+        # add check for inventory.pkl equaling current Item.Inventory?
         saveCheck = QMessageBox.information(self, "save?", "do you want to save before closing?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
         if saveCheck == QMessageBox.StandardButton.Yes:
             self.user_input_widget.save_inventory()

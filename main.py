@@ -30,10 +30,11 @@ class Item:
     def __init__(self, name: str, total_amount: float, current_amount: float = 0, cost: float = 0, source: str ="") -> None:
         self.name: str = name
         self.current_amount: float = current_amount
-        self.availability: bool = True if current_amount > 0 else False
+    
         self.total_amount: float = total_amount
         self.cost: float = cost
         self.source: str = source
+        self.availability: bool = True if current_amount > 0 else False
         Item.Inventory[self.name] = self
 
     # setter methods
